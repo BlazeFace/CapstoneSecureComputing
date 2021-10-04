@@ -4,9 +4,10 @@ import PIL
 from PIL import Image
 from numpy.random import default_rng
 from matplotlib import pyplot as plt
+import math
 
 P = 10
-alpha = 1
+alpha = .005
 
 
 # FaceLib outputs scores so we can use the same L function as Yolo
@@ -24,28 +25,39 @@ def mask(mask1):
                 m_x[...] = 1
     return mask1
 
+#Projected Gradient Descent
+def pgd(image):
+    x = np.array(img)
+    SHAPE = x.shape
+    random.seed(238)
+    phi = 1
+    n = random.randint(500, 1000000)
+
+    m = mask(np.zeros(SHAPE))
+    rng = default_rng()
+    delta = np.multiply(rng.integers(low=0, high=256, size=SHAPE), m)
+    for i in range(1, P + 1):
+        #delta = np.add(delta, alpha * np.gradient(loss(delta, 1)))
+        delta = np.multiply(delta, m)
+        delta = np.maximum(np.minimum(delta, np.subtract(np.zeros(SHAPE), x)),
+                        np.subtract(np.ones(SHAPE), x))
+
+    plt.imshow(delta, interpolation='nearest')
+    plt.savefig("delta.jpeg")
+    plt.figure(figsize=(20, 4))
+
+    array = np.multiply(delta, x)
+    array = np.absolute(array)
+    array = array % 256
+
+    return array
+
+
 img = PIL.Image.open("example.jpg")
-x = np.array(img.getdata())
-SHAPE = x.shape
-random.seed(238)
-phi = 1
-n = random.randint(500, 1000000)
 
-m = mask(np.zeros(SHAPE))
-rng = default_rng()
-delta = np.multiply(rng.integers(low=0, high=256, size=SHAPE), m)
-for i in range(1, P + 1):
-    #delta = np.add(delta, alpha * np.gradient(loss(delta, 1)))
-    delta = np.multiply(delta, m)
-    delta = np.maximum(np.minimum(delta, np.subtract(np.zeros(SHAPE), x)),
-                       np.subtract(np.ones(SHAPE), x))
+array = pgd(img)
 
-plt.imshow(delta, interpolation='nearest')
-plt.show()
-
-array = np.multiply(delta, x)
-array = np.absolute(array)
-array = array % 256
-im = Image.fromarray(array)
-im = im.convert('RGB')
-im.save("test.jpeg")
+print(array.shape)
+im = Image.fromarray(array, "RGB")
+#im.convert('RGB')
+im.save('output.jpeg')
