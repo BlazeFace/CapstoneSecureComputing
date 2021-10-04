@@ -21,7 +21,7 @@ def loss(z, m):
 def mask(mask1, org):
     with np.nditer(mask1, flags=['multi_index'], op_flags=['readwrite']) as it:
         for m_x in it:
-            if random.randint(1, 100) <= 1:
+            if random.randint(1, 1000) <= 5:
                 m_x[...] = 1
                 org[it.multi_index] = 0
     return mask1, org
@@ -34,7 +34,7 @@ def pgd(image_arr):
     phi = 1
     n = random.randint(500, 1000000)
 
-    m, x = mask(mask1=np.zeros(SHAPE), org=x)
+    m, org = mask(mask1=np.zeros(SHAPE), org=x.copy())
     rng = default_rng()
     delta = np.multiply(rng.integers(low=0, high=256, size=SHAPE), m)
     for i in range(1, P + 1):
@@ -48,7 +48,7 @@ def pgd(image_arr):
     plt.figure(figsize=(20, 4))
     delta = np.absolute(delta)
     dm = np.multiply(delta, m)
-    array = dm + x
+    array = dm + org
     return array
 
 
