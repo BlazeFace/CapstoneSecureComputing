@@ -18,22 +18,23 @@ def loss(z, m):
     return loss_sum
 
 
-def mask(mask1):
-    with np.nditer(mask1, op_flags=['readwrite']) as it:
+def mask(mask1, org):
+    with np.nditer(mask1, flags=['multi_index'], op_flags=['readwrite']) as it:
         for m_x in it:
-            if random.randint(1, 100) <= 3:
+            if random.randint(1, 100) <= 1:
                 m_x[...] = 1
-    return mask1
+                org[it.multi_index] = 0
+    return mask1, org
 
 #Projected Gradient Descent
-def pgd(image):
-    x = np.array(img)
+def pgd(image_arr):
+    x = image_arr
     SHAPE = x.shape
     random.seed(238)
     phi = 1
     n = random.randint(500, 1000000)
 
-    m = mask(np.zeros(SHAPE))
+    m, x = mask(mask1=np.zeros(SHAPE), org=x)
     rng = default_rng()
     delta = np.multiply(rng.integers(low=0, high=256, size=SHAPE), m)
     for i in range(1, P + 1):
@@ -45,19 +46,20 @@ def pgd(image):
     plt.imshow(delta, interpolation='nearest')
     plt.savefig("delta.jpeg")
     plt.figure(figsize=(20, 4))
-
-    array = np.multiply(delta, x)
-    array = np.absolute(array)
-    array = array % 256
-
+    delta = np.absolute(delta)
+    dm = np.multiply(delta, m)
+    array = dm + x
     return array
 
 
 img = PIL.Image.open("example.jpg")
 
-array = pgd(img)
-
+impre = np.array(img)
+array = pgd(impre)
 print(array.shape)
-im = Image.fromarray(array, "RGB")
+
+#im = Image.fromarray(array, "RGB")
 #im.convert('RGB')
-im.save('output.jpeg')
+#im.save('output.jpeg')
+im2 = Image.fromarray(impre)
+im2.save('out2.jpg')
