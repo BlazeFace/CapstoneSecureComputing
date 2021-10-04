@@ -21,8 +21,8 @@ def loss(z, m):
 def mask(mask1, org):
     with np.nditer(mask1, flags=['multi_index'], op_flags=['readwrite']) as it:
         for m_x in it:
-            if random.randint(1, 1000) <= 5:
-                m_x[...] = 1
+            if random.randint(1, 1000) <= 1:
+                mask1[it.multi_index] = 1
                 org[it.multi_index] = 0
     return mask1, org
 
@@ -30,25 +30,23 @@ def mask(mask1, org):
 def pgd(image_arr):
     x = image_arr
     SHAPE = x.shape
-    random.seed(238)
+    random.seed()
     phi = 1
     n = random.randint(500, 1000000)
 
     m, org = mask(mask1=np.zeros(SHAPE), org=x.copy())
     rng = default_rng()
-    delta = np.multiply(rng.integers(low=0, high=256, size=SHAPE), m)
-    for i in range(1, P + 1):
-        #delta = np.add(delta, alpha * np.gradient(loss(delta, 1)))
-        delta = np.multiply(delta, m)
-        delta = np.maximum(np.minimum(delta, np.subtract(np.zeros(SHAPE), x)),
-                        np.subtract(np.ones(SHAPE), x))
-
+    ranints = rng.integers(low=0, high=255, size=SHAPE)
+    delta = np.multiply(ranints, m)
+    delta = np.where(delta > 5, delta % 256, delta)
     plt.imshow(delta, interpolation='nearest')
     plt.savefig("delta.jpeg")
     plt.figure(figsize=(20, 4))
     delta = np.absolute(delta)
     dm = np.multiply(delta, m)
     array = dm + org
+    array = array.astype(np.uint8)
+    array = np.where(array > 256, array%256, array )
     return array
 
 
@@ -58,8 +56,8 @@ impre = np.array(img)
 array = pgd(impre)
 print(array.shape)
 
-#im = Image.fromarray(array, "RGB")
-#im.convert('RGB')
-#im.save('output.jpeg')
+im = Image.fromarray((array * 1).astype(np.uint8)).convert('RGB')
+#im = Image.fromarray(array)
+im.save('output.jpeg')
 im2 = Image.fromarray(impre)
 im2.save('out2.jpg')
