@@ -15,8 +15,6 @@ from cleverhans.torch.attacks.projected_gradient_descent import (
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-P = 10
-alpha = .01 # Percentage of permutated pixels
 mobilenet_mean=[0.485, 0.456, 0.406]
 mobilenet_std=[0.229, 0.224, 0.225]
 
@@ -120,7 +118,7 @@ def cleverhans_pgd(x):
     # Run through PGD
     epsilon = 8/255
     epsilon_iter = 2/225
-    nb_iter = 40
+    nb_iter = 100
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
     #x = fast_gradient_method(model, x, epsilon, np.inf)
 
