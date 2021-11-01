@@ -6,11 +6,13 @@ from numpy.random import default_rng
 from matplotlib import pyplot as plt
 import math
 import torch
+import torch.nn as nn
 from torchvision import transforms
 from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.torch.attacks.projected_gradient_descent import (
     projected_gradient_descent,
 )
+from facenet_pytorch import InceptionResnetV1
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -19,10 +21,17 @@ alpha = .01 # Percentage of permutated pixels
 mobilenet_mean=[0.485, 0.456, 0.406]
 mobilenet_std=[0.229, 0.224, 0.225]
 
-def inverse_normalize(tensor, mean, std):
-    for t, m, s in zip(tensor, mean, std):
-        t.mul_(s).add_(m)
-    return tensor
+class Normalize(nn.Module):
+    def __init__(self, mean, std) :
+        super(Normalize, self).__init__()
+        self.register_buffer('mean', torch.Tensor(mean))
+        self.register_buffer('std', torch.Tensor(std))
+        
+    def forward(self, input):
+        # Broadcasting
+        mean = self.mean.reshape(1, 3, 1, 1)
+        std = self.std.reshape(1, 3, 1, 1)
+        return (input - mean) / std
 
 # FaceLib outputs scores so we can use the same L function as Yolo
 def loss(z, m):
@@ -75,28 +84,49 @@ def mobilenet_preprocess(x):
 def cleverhans_pgd(x):
 
     # Transform x to be usable by Mobilenet
-    x = mobilenet_preprocess(x)
-    
+    #x = mobilenet_preprocess(x)
+    #x = torch.tensor(x)
+    preprocess_ = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+    ])
+
+    x = preprocess_(x)
+    x = x.unsqueeze(0).to(device)
+
     # As a test - convert the x back to an image to ensure the image before PGD looks the same
-    test_input = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
-    test_input = flipRGB(test_input)
-    test_input = test_input.detach().cpu().numpy()
-    test_input_image = Image.fromarray((test_input * 255).astype(np.uint8)).convert('RGB')
-    test_input_image.save('input.jpeg')
+    # test_input = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
+    # test_input = flipRGB(test_input)
+    # test_input = test_input.detach().cpu().numpy()
+    # test_input_image = Image.fromarray((test_input * 255).astype(np.uint8)).convert('RGB')
+    # test_input_image.save('input.jpeg')
 
     #Acquire the model to do PGD on
     model = torch.hub.load('pytorch/vision:v0.8.0', 'mobilenet_v2', pretrained=True) # Facelib uses the Mobilenet model
     model.to(device)
 
+    norm_layer = Normalize(mean=mobilenet_mean, std=mobilenet_std)
+
+    model = nn.Sequential(
+        norm_layer,
+        model
+    ).to(device)
+
+    model = model.eval()
+
+    # For a model pretrained on VGGFace2
+    #model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+
     # Run through PGD
     epsilon = .01
     epsilon_iter = 0.001
     nb_iter = 40
-    #x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
-    x = fast_gradient_method(model, x, epsilon, np.inf)
+    x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
+    #x = fast_gradient_method(model, x, epsilon, np.inf)
 
     # Unnormalize
-    x = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
+    #x = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
 
     # Reshape the tensor
     x = flipRGB(x)
