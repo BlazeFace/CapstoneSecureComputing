@@ -12,7 +12,6 @@ from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.torch.attacks.projected_gradient_descent import (
     projected_gradient_descent,
 )
-from facenet_pytorch import InceptionResnetV1
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -119,8 +118,8 @@ def cleverhans_pgd(x):
     #model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
     # Run through PGD
-    epsilon = .01
-    epsilon_iter = 0.001
+    epsilon = 8/255
+    epsilon_iter = 2/225
     nb_iter = 40
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
     #x = fast_gradient_method(model, x, epsilon, np.inf)
