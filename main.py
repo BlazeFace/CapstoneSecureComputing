@@ -12,6 +12,7 @@ from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.torch.attacks.projected_gradient_descent import (
     projected_gradient_descent,
 )
+from facenet_pytorch import InceptionResnetV1
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -37,7 +38,6 @@ def loss(z, m):
         loss_sum += np.log(z)
     return loss_sum
 
-
 def mask(mask1, org):
     with np.nditer(mask1, flags=['multi_index'], op_flags=['readwrite']) as it:
         for m_x in it:
@@ -47,42 +47,9 @@ def mask(mask1, org):
                     org[it.multi_index] = 0
     return mask1, org
 
-def flipRGB(x):
-    x = x[0] # x is a batch of one item, we only want the actual item
-
-    # Now x is in the shape (3, x, y) whereas we want it at (x, y, 3)
-
-    [r, g, b] = x
-
-    y = []
-    for i in range(x.shape[1]):
-        row = []
-        for j in range(x.shape[2]):
-            row.append([r[i][j].item(), g[i][j].item(), b[i][j].item()])
-        y.append(row)
-    
-    y = torch.tensor(y)
-
-    # Now it is in the shape (x, y, 3)
-    return y
-
-def mobilenet_preprocess(x):
-    preprocess_ = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mobilenet_mean, std=mobilenet_std),
-    ])
-
-    x = preprocess_(x)
-    x = x.unsqueeze(0).to(device)
-    return x
-
-def cleverhans_pgd(x):
+def cleverhans_mobilenet_pgd(x):
 
     # Transform x to be usable by Mobilenet
-    #x = mobilenet_preprocess(x)
-    #x = torch.tensor(x)
     preprocess_ = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
@@ -91,13 +58,6 @@ def cleverhans_pgd(x):
 
     x = preprocess_(x)
     x = x.unsqueeze(0).to(device)
-
-    # As a test - convert the x back to an image to ensure the image before PGD looks the same
-    # test_input = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
-    # test_input = flipRGB(test_input)
-    # test_input = test_input.detach().cpu().numpy()
-    # test_input_image = Image.fromarray((test_input * 255).astype(np.uint8)).convert('RGB')
-    # test_input_image.save('input.jpeg')
 
     #Acquire the model to do PGD on
     model = torch.hub.load('pytorch/vision:v0.8.0', 'mobilenet_v2', pretrained=True) # Facelib uses the Mobilenet model
@@ -120,15 +80,41 @@ def cleverhans_pgd(x):
     epsilon_iter = 2/225
     nb_iter = 100
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
-    #x = fast_gradient_method(model, x, epsilon, np.inf)
 
     # Reshape the tensor
-    x = flipRGB(x)
+    x = x[0].permute((1,2,0))
 
     #scale tensor
     x = x * 255
-    print(x.shape)
-    print(x)
+
+    return x
+
+def cleverhans_facenet_pgd(x, pretrain_set):
+
+    # Transform x to be usable by Facenet
+    preprocess_ = transforms.Compose([
+        transforms.Resize(160),
+        transforms.ToTensor(),
+    ])
+
+    x = preprocess_(x)
+    x = x.unsqueeze(0).to(device)
+
+    # For a facenet model pretrained on VGGFace2 or casia-webface
+    model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
+
+    # Run through PGD
+    epsilon = 8/255
+    epsilon_iter = 2/225
+    nb_iter = 100
+    x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
+
+    # Reshape the tensor
+    x = x[0].permute((1,2,0))
+
+    #scale tensor
+    x = x * 255
+    
     return x
 
 #Projected Gradient Descent
@@ -202,7 +188,7 @@ def display(x, filename):
     if torch.is_tensor(x):
         x = x.detach().cpu().numpy() # put tensor on CPU
     img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
-    img.save(filename)
+    img.save("output/" + filename)
 
 def createPermutation(filename):
     img = PIL.Image.open(filename)
@@ -210,8 +196,14 @@ def createPermutation(filename):
     x_v1 = pgdv1(img)
     display(x_v1, "output_v1.jpeg")   
 
-    x_cleverhans = cleverhans_pgd(img)
-    display(x_cleverhans, "output_cleverhans.jpeg")
+    x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
+    display(x_cleverhans_mobilenet, "output_cleverhans_mobilenet.jpeg")
+
+    x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
+    display(x_cleverhans_facenet_vggface2, "output_cleverhans_facenet_vggface2.jpeg")
+
+    x_cleverhans_facenet_casiawebface = cleverhans_facenet_pgd(img, "casia-webface")
+    display(x_cleverhans_facenet_casiawebface, "output_cleverhans_facenet_casiawebface.jpeg")
 
     #x_v2 = pgdv2(img)
     #display(x_v2, "output_v2.jpeg")
@@ -219,23 +211,5 @@ def createPermutation(filename):
     #print("Image tensor after PGD:")
     #print(x_cleverhans)
 
-"""
-img = PIL.Image.open("example.jpg")
-impre = np.array(img)
-
-x2 = flipRGB(preprocess(impre))
-x2 = x2.detach().cpu().numpy()
-im = Image.fromarray((x2 * 255).astype(np.uint8)).convert('RGB')
-#im = Image.fromarray(array)
-im.save('input.jpeg')
-"""
 
 createPermutation("example.jpg")
-
-"""
-im = Image.fromarray((array * 1).astype(np.uint8)).convert('RGB')
-#im = Image.fromarray(array)
-im.save('output.jpeg')
-im2 = Image.fromarray(impre)
-im2.save('out2.jpg')
-"""
