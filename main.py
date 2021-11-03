@@ -122,9 +122,6 @@ def cleverhans_pgd(x):
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
     #x = fast_gradient_method(model, x, epsilon, np.inf)
 
-    # Unnormalize
-    #x = inverse_normalize(tensor=x,mean=mobilenet_mean, std=mobilenet_std)
-
     # Reshape the tensor
     x = flipRGB(x)
 
