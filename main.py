@@ -133,7 +133,7 @@ def torchattacks_facenet_pgd(x, pretrain_set):
     # Run through PGD
     epsilon = 8/255
     epsilon_iter = 2/225
-    nb_iter = 40
+    nb_iter = 100
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
     adv_images = atk(x, torch.tensor([0]))
