@@ -1,4 +1,6 @@
 import random
+import requests
+from io import BytesIO
 import numpy as np
 import PIL
 from PIL import Image
@@ -13,6 +15,7 @@ from cleverhans.torch.attacks.projected_gradient_descent import (
     projected_gradient_descent,
 )
 from facenet_pytorch import InceptionResnetV1
+import torchattacks
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -72,9 +75,6 @@ def cleverhans_mobilenet_pgd(x):
 
     model = model.eval()
 
-    # For a model pretrained on VGGFace2
-    #model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-
     # Run through PGD
     epsilon = 8/255
     epsilon_iter = 2/225
@@ -115,6 +115,32 @@ def cleverhans_facenet_pgd(x, pretrain_set):
     #scale tensor
     x = x * 255
     
+    return x
+
+def torchattacks_facenet_pgd(x, pretrain_set):
+     # Transform x to be usable by Facenet
+    preprocess_ = transforms.Compose([
+        transforms.Resize(160),
+        transforms.ToTensor(),
+    ])
+
+    x = preprocess_(x)
+    x = x.unsqueeze(0).to(device)
+
+    # For a facenet model pretrained on VGGFace2 or casia-webface
+    model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
+
+    # Run through PGD
+    epsilon = 8/255
+    epsilon_iter = 2/225
+    nb_iter = 40
+    atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
+    atk.set_return_type(type='int')
+    adv_images = atk(x, torch.tensor([0]))
+
+    # Reshape the tensor
+    x = adv_images[0].permute((1,2,0))
+
     return x
 
 #Projected Gradient Descent
@@ -190,21 +216,32 @@ def display(x, filename):
     img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
     img.save("output/" + filename)
 
-def createPermutation(filename):
-    img = PIL.Image.open(filename)
+def createPermutation(filename, url=None):
+    if url is None:
+        img = PIL.Image.open(filename)
+    else:
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content))
+    filename = filename.split(".")[0]
     
-    x_v1 = pgdv1(img)
-    display(x_v1, "output_v1.jpeg")   
+    
+    # x_v1 = pgdv1(img)
+    # display(x_v1, "output_v1.jpeg")   
 
     x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
-    display(x_cleverhans_mobilenet, "output_cleverhans_mobilenet.jpeg")
+    display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
 
     x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
-    display(x_cleverhans_facenet_vggface2, "output_cleverhans_facenet_vggface2.jpeg")
+    display(x_cleverhans_facenet_vggface2, filename + "_cleverhans_facenet_vggface2.jpeg")
 
     x_cleverhans_facenet_casiawebface = cleverhans_facenet_pgd(img, "casia-webface")
-    display(x_cleverhans_facenet_casiawebface, "output_cleverhans_facenet_casiawebface.jpeg")
+    display(x_cleverhans_facenet_casiawebface, filename + "_cleverhans_facenet_casiawebface.jpeg")
 
+    x_torchattacks_facenet_vggface2 = torchattacks_facenet_pgd(img, "vggface2")
+    display(x_torchattacks_facenet_vggface2, filename + "_torchattacks_facenet_vggface2.jpeg")
+
+    x_torchattacks_facenet_casiawebface = torchattacks_facenet_pgd(img, "casia-webface")
+    display(x_torchattacks_facenet_casiawebface, filename + "_torchattacks_facenet_casiawebface.jpeg")
     #x_v2 = pgdv2(img)
     #display(x_v2, "output_v2.jpeg")
 
@@ -212,4 +249,4 @@ def createPermutation(filename):
     #print(x_cleverhans)
 
 
-createPermutation("example.jpg")
+createPermutation(filename="output", url="https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140")
