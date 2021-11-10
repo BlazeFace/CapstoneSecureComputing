@@ -1,3 +1,4 @@
+import os
 import random
 import requests
 from io import BytesIO
@@ -79,7 +80,7 @@ def cleverhans_mobilenet_pgd(x):
     # Run through PGD
     epsilon = 8/255
     epsilon_iter = 2/225
-    nb_iter = 100
+    nb_iter = 1
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
 
     # Reshape the tensor
@@ -107,7 +108,7 @@ def cleverhans_facenet_pgd(x, pretrain_set):
     # Run through PGD
     epsilon = 8/255
     epsilon_iter = 2/225
-    nb_iter = 100
+    nb_iter = 1
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
 
     # Reshape the tensor
@@ -132,9 +133,9 @@ def torchattacks_facenet_pgd(x, pretrain_set):
     model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
 
     # Run through PGD
-    epsilon = 8/255
-    epsilon_iter = 2/225
-    nb_iter = 100
+    epsilon = 2/255
+    epsilon_iter = 1/225
+    nb_iter = 5
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
     adv_images = atk(x, torch.tensor([0]))
@@ -226,22 +227,23 @@ def createPermutation(filename, url=None):
         img.save("input/" + filename + ".jpg")
 
     filenames = ["input/" + filename + ".jpg"]
-    filename = "output/" + filename.split(".")[0]
+    filename = "output/" + filename.split(".")[0] + "/"
+    os.makedirs(filename)
     
     # x_v1 = pgdv1(img)
     # display(x_v1, "output_v1.jpeg")
 
-    x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
-    display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
-    filenames.append(filename + "_cleverhans_mobilenet.jpeg")
+    # x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
+    # display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
+    # filenames.append(filename + "_cleverhans_mobilenet.jpeg")
 
-    x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
-    display(x_cleverhans_facenet_vggface2, filename + "_cleverhans_facenet_vggface2.jpeg")
-    filenames.append(filename + "_cleverhans_facenet_vggface2.jpeg")
+    # x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
+    # display(x_cleverhans_facenet_vggface2, filename + "_cleverhans_facenet_vggface2.jpeg")
+    # filenames.append(filename + "_cleverhans_facenet_vggface2.jpeg")
 
-    x_cleverhans_facenet_casiawebface = cleverhans_facenet_pgd(img, "casia-webface")
-    display(x_cleverhans_facenet_casiawebface, filename + "_cleverhans_facenet_casiawebface.jpeg")
-    filenames.append(filename + "_cleverhans_facenet_casiawebface.jpeg")
+    # x_cleverhans_facenet_casiawebface = cleverhans_facenet_pgd(img, "casia-webface")
+    # display(x_cleverhans_facenet_casiawebface, filename + "_cleverhans_facenet_casiawebface.jpeg")
+    # filenames.append(filename + "_cleverhans_facenet_casiawebface.jpeg")
 
     x_torchattacks_facenet_vggface2 = torchattacks_facenet_pgd(img, "vggface2")
     display(x_torchattacks_facenet_vggface2, filename + "_torchattacks_facenet_vggface2.jpeg")
@@ -250,6 +252,15 @@ def createPermutation(filename, url=None):
     x_torchattacks_facenet_casiawebface = torchattacks_facenet_pgd(img, "casia-webface")
     display(x_torchattacks_facenet_casiawebface, filename + "_torchattacks_facenet_casiawebface.jpeg")
     filenames.append(filename + "_torchattacks_facenet_casiawebface.jpeg")
+
+    # preprocess_ = transforms.Compose([
+    #     transforms.Resize(160),
+    # ])
+
+    # x = preprocess_(img)
+
+    # print(type(x))
+    # x.save("test.jpg")
 
     print(filenames)
     scores = getScores(filenames)
@@ -260,11 +271,11 @@ def createPermutation(filename, url=None):
         print("Score: %s" % score)
     print("="*30 + "\n")
 
-#createPermutation(filename="output", url="https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140")
+createPermutation(filename="pose", url="https://images.hivisasa.com/1200/It9Rrm02rE20.jpg")
 
-images = {'oops':'https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140',
-'pose':'https://images.hivisasa.com/1200/It9Rrm02rE20.jpg',
-'elderlycouple':'https://www.latrobe.edu.au/jrc/jri-images/empowering-older-people.jpg/1680.jpg'}
+# images = {'oops':'https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140',
+# 'pose':'https://images.hivisasa.com/1200/It9Rrm02rE20.jpg',
+# 'elderlycouple':'https://www.latrobe.edu.au/jrc/jri-images/empowering-older-people.jpg/1680.jpg'}
 
-for key,value in images.items():
-    createPermutation(filename=key, url=value)
+# for key,value in images.items():
+#     createPermutation(filename=key, url=value)

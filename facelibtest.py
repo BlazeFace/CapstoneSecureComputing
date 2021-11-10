@@ -21,12 +21,16 @@ def getScores(filenames):
     # image5 = cv2.imread('output/output_torchattacks_facenet_vggface2.jpeg')
 
     total_scores = []
-    for image in images:
+    for image, filename in zip(images, filenames):
         boxes, scores, landmarks = detector.detect_faces(image)
 
         faces, boxes, scores, landmarks = detector.detect_align(image)
         
         total_scores.append(scores)
+        
+        print(faces.shape)
+        im2 = Image.fromarray(faces.detach().cpu().numpy()[0])
+        im2.save(filename.split('.')[0] + "boundingbox.jpg")
     
     return total_scores
 
