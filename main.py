@@ -16,6 +16,7 @@ from cleverhans.torch.attacks.projected_gradient_descent import (
 )
 from facenet_pytorch import InceptionResnetV1
 import torchattacks
+from facelibtest import getScores
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -214,7 +215,7 @@ def display(x, filename):
     if torch.is_tensor(x):
         x = x.detach().cpu().numpy() # put tensor on CPU
     img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
-    img.save("output/" + filename)
+    img.save(filename)
 
 def createPermutation(filename, url=None):
     if url is None:
@@ -222,31 +223,48 @@ def createPermutation(filename, url=None):
     else:
         response = requests.get(url)
         img = Image.open(BytesIO(response.content))
-    filename = filename.split(".")[0]
-    
+        img.save("input/" + filename + ".jpg")
+
+    filenames = ["input/" + filename + ".jpg"]
+    filename = "output/" + filename.split(".")[0]
     
     # x_v1 = pgdv1(img)
-    # display(x_v1, "output_v1.jpeg")   
+    # display(x_v1, "output_v1.jpeg")
 
     x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
     display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
+    filenames.append(filename + "_cleverhans_mobilenet.jpeg")
 
     x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
     display(x_cleverhans_facenet_vggface2, filename + "_cleverhans_facenet_vggface2.jpeg")
+    filenames.append(filename + "_cleverhans_facenet_vggface2.jpeg")
 
     x_cleverhans_facenet_casiawebface = cleverhans_facenet_pgd(img, "casia-webface")
     display(x_cleverhans_facenet_casiawebface, filename + "_cleverhans_facenet_casiawebface.jpeg")
+    filenames.append(filename + "_cleverhans_facenet_casiawebface.jpeg")
 
     x_torchattacks_facenet_vggface2 = torchattacks_facenet_pgd(img, "vggface2")
     display(x_torchattacks_facenet_vggface2, filename + "_torchattacks_facenet_vggface2.jpeg")
+    filenames.append(filename + "_torchattacks_facenet_vggface2.jpeg")
 
     x_torchattacks_facenet_casiawebface = torchattacks_facenet_pgd(img, "casia-webface")
     display(x_torchattacks_facenet_casiawebface, filename + "_torchattacks_facenet_casiawebface.jpeg")
-    #x_v2 = pgdv2(img)
-    #display(x_v2, "output_v2.jpeg")
+    filenames.append(filename + "_torchattacks_facenet_casiawebface.jpeg")
 
-    #print("Image tensor after PGD:")
-    #print(x_cleverhans)
+    print(filenames)
+    scores = getScores(filenames)
+    
+    print("="*30 + "\n")
+    for filename,score in zip(filenames, scores):
+        print("File: %s" % filename)
+        print("Score: %s" % score)
+    print("="*30 + "\n")
 
+#createPermutation(filename="output", url="https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140")
 
-createPermutation(filename="output", url="https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140")
+images = {'oops':'https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140',
+'pose':'https://images.hivisasa.com/1200/It9Rrm02rE20.jpg',
+'elderlycouple':'https://www.latrobe.edu.au/jrc/jri-images/empowering-older-people.jpg/1680.jpg'}
+
+for key,value in images.items():
+    createPermutation(filename=key, url=value)
