@@ -78,9 +78,9 @@ def cleverhans_mobilenet_pgd(x):
     model = model.eval()
 
     # Run through PGD
-    epsilon = 8/255
-    epsilon_iter = 2/225
-    nb_iter = 1
+    epsilon = 2/255
+    epsilon_iter = 1/225
+    nb_iter = 4
     x = projected_gradient_descent(model, x, epsilon, epsilon_iter, nb_iter, np.inf)
 
     # Reshape the tensor
@@ -133,9 +133,9 @@ def torchattacks_facenet_pgd(x, pretrain_set):
     model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
 
     # Run through PGD
-    epsilon = 2/255
+    epsilon = 4/255
     epsilon_iter = 1/225
-    nb_iter = 5
+    nb_iter = 12
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
     adv_images = atk(x, torch.tensor([0]))
@@ -226,16 +226,18 @@ def createPermutation(filename, url=None):
         img = Image.open(BytesIO(response.content))
         img.save("input/" + filename + ".jpg")
 
-    filenames = ["input/" + filename + ".jpg"]
+    filenames = ["input/" + filename + "_resized.jpg"]
     filename = "output/" + filename.split(".")[0] + "/"
-    os.makedirs(filename)
+
+    if not os.path.isdir(filename):
+        os.makedirs(filename)
     
     # x_v1 = pgdv1(img)
     # display(x_v1, "output_v1.jpeg")
 
-    # x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
-    # display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
-    # filenames.append(filename + "_cleverhans_mobilenet.jpeg")
+    x_cleverhans_mobilenet = cleverhans_mobilenet_pgd(img)
+    display(x_cleverhans_mobilenet, filename + "_cleverhans_mobilenet.jpeg")
+    filenames.append(filename + "_cleverhans_mobilenet.jpeg")
 
     # x_cleverhans_facenet_vggface2 = cleverhans_facenet_pgd(img, "vggface2")
     # display(x_cleverhans_facenet_vggface2, filename + "_cleverhans_facenet_vggface2.jpeg")
@@ -246,30 +248,50 @@ def createPermutation(filename, url=None):
     # filenames.append(filename + "_cleverhans_facenet_casiawebface.jpeg")
 
     x_torchattacks_facenet_vggface2 = torchattacks_facenet_pgd(img, "vggface2")
-    display(x_torchattacks_facenet_vggface2, filename + "_torchattacks_facenet_vggface2.jpeg")
-    filenames.append(filename + "_torchattacks_facenet_vggface2.jpeg")
+    display(x_torchattacks_facenet_vggface2, filename + "torchattacks_facenet_vggface2.jpeg")
+    filenames.append(filename + "torchattacks_facenet_vggface2.jpeg")
 
     x_torchattacks_facenet_casiawebface = torchattacks_facenet_pgd(img, "casia-webface")
-    display(x_torchattacks_facenet_casiawebface, filename + "_torchattacks_facenet_casiawebface.jpeg")
-    filenames.append(filename + "_torchattacks_facenet_casiawebface.jpeg")
+    display(x_torchattacks_facenet_casiawebface, filename + "torchattacks_facenet_casiawebface.jpeg")
+    filenames.append(filename + "torchattacks_facenet_casiawebface.jpeg")
 
-    # preprocess_ = transforms.Compose([
-    #     transforms.Resize(160),
-    # ])
+    preprocess_ = transforms.Compose([
+         transforms.Resize(160),
+    ])
 
-    # x = preprocess_(img)
+    x = preprocess_(img)
 
-    # print(type(x))
-    # x.save("test.jpg")
+    resized_filename = filenames[0].split(".")[0] + "_resized.jpg"
+    x.save(resized_filename)
 
-    print(filenames)
-    scores = getScores(filenames)
+    faces, scores, boxes, landmarks = getScores(filenames)
     
     print("="*30 + "\n")
-    for filename,score in zip(filenames, scores):
+    for filename,face,score,box,landmark in zip(filenames, faces, scores, boxes, landmarks):
         print("File: %s" % filename)
+        #print("faces: %s" % face)
         print("Score: %s" % score)
+        print("Boxes: %s" % box)
+        #print("Landmarks: %s" % landmark)
     print("="*30 + "\n")
+
+#Return list of strings of all algorithms
+def methods():
+    return []
+
+# alg -- string
+# file -- PIL files
+# return score of effectiveness
+def evaluate(alg):
+    return 0
+
+# Has the score decreased?
+# Has the boudning box shifted, by how much?
+# Was a face even able to be found?
+
+# SSIM similarituy
+
+# Masking the face based on facelib & keeping permutations only for mask
 
 createPermutation(filename="pose", url="https://images.hivisasa.com/1200/It9Rrm02rE20.jpg")
 
