@@ -1,5 +1,6 @@
 import os
 import random
+from typing import List
 import requests
 from io import BytesIO
 import numpy as np
@@ -276,13 +277,24 @@ def createPermutation(filename, url=None):
     print("="*30 + "\n")
 
 #Return list of strings of all algorithms
-def methods():
-    return []
+def methods() -> List[str]:
+    return ["torchattacks_facenet_vggface2", "torchattacks_facenet_casiawebface"]
 
+
+OUTPUT = "output/test/"
 # alg -- string
 # file -- PIL files
 # return score of effectiveness
-def evaluate(alg):
+def evaluate(alg: str, file: PIL.Image.Image) -> int:
+    attacks = {
+        "torchattacks_facenet_vggface2": lambda x: torchattacks_facenet_pgd(x, "vggface2"),
+        "torchattacks_facenet_casiawebface": lambda x: torchattacks_facenet_pgd(x, "casiawebface")
+    }
+    x = attacks[alg](file)
+    # X is the perturbed image
+    display(x, "%s%s.jpg" % (OUTPUT, alg)) # save the image -- TBD
+
+
     return 0
 
 # Has the score decreased?
