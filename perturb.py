@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 import math
 import torch
 import torch.nn as nn
-from torchvision import transforms
+from torchvision import transforms, datasets
 from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.torch.attacks.projected_gradient_descent import (
     projected_gradient_descent,
@@ -294,7 +294,6 @@ def evaluate(alg: str, file: PIL.Image.Image) -> int:
     # X is the perturbed image
     display(x, "%s%s.jpg" % (OUTPUT, alg)) # save the image -- TBD
 
-
     return 0
 
 # Has the score decreased?
@@ -305,7 +304,9 @@ def evaluate(alg: str, file: PIL.Image.Image) -> int:
 
 # Masking the face based on facelib & keeping permutations only for mask
 
+"""
 createPermutation(filename="pose", url="https://images.hivisasa.com/1200/It9Rrm02rE20.jpg")
+"""
 
 # images = {'oops':'https://thoughtcatalog.com/wp-content/uploads/2018/06/oopsface.jpg?w=1140',
 # 'pose':'https://images.hivisasa.com/1200/It9Rrm02rE20.jpg',
@@ -313,3 +314,62 @@ createPermutation(filename="pose", url="https://images.hivisasa.com/1200/It9Rrm0
 
 # for key,value in images.items():
 #     createPermutation(filename=key, url=value)
+
+
+input_path = "input/test/"
+output_path = "output/test/"
+pretrain_set = "vggface2"
+index = 0
+
+#Create the output directory if it does not already exist
+try:
+    os.mkdir(output_path)
+except FileExistsError:
+    None
+    #intentionally left blank
+    
+# Transform x to be usable by Facenet
+transform = transforms.Compose([
+    transforms.Resize(size=160),
+    transforms.CenterCrop(size=160), #TODO: crop to the face rather than aribitrarily in the middle
+    transforms.ToTensor(),
+])
+
+dataset = datasets.ImageFolder(input_path, transform=transform)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False)
+
+# (960, 340, 640, 3)
+
+for images, labels in dataloader:
+    print(images[0].shape)
+
+    #TEST display
+    x = images[1].permute((1,2,0))
+    x = x * 255
+    x = x.detach().cpu().numpy() # put tensor on CPU
+    img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
+    img.save("test.jpg")
+
+    #x = x.unsqueeze(0).to(device)
+
+    # For a facenet model pretrained on VGGFace2 or casia-webface
+    model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
+
+    # Run through PGD
+    epsilon = 4/255
+    epsilon_iter = 1/225
+    nb_iter = 12
+    atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
+    atk.set_return_type(type='int')
+    adv_images = atk(images, labels)
+
+    # Reshape the tensor
+    x = adv_images[1].permute((1,2,0))
+
+    display(x, "test2.jpg")
+    
+    #save all to folder
+    for adv_image in adv_images:
+        x = adv_image.permute((1,2,0))
+        display(x, "%sframe%d.jpg" % (output_path, index))
+        index += 1
