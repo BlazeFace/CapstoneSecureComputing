@@ -1,4 +1,4 @@
-numpy==1.19.5
+numpy
 Pillow==8.4.0
 matplotlib==3.3.4
 torch==1.10.0
@@ -10,7 +10,7 @@ cycler==0.11.0
 python-dateutil==2.8.2
 pyparsing==3.0.4
 typing-extensions==3.10.0.2
-dataclasses==0.8
+dataclasses==0.6
 tensorflow-probability==0.14.1
 scipy==1.5.4
 nose==1.3.7
@@ -30,3 +30,6 @@ certifi==2021.10.8
 charset-normalizer==2.0.7
 idna==3.3
 torchattacks==3.2.2
+rich
+ffmpeg-python
+facelib
