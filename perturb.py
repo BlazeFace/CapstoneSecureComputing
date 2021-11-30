@@ -1,20 +1,12 @@
 import os
-import random
 from typing import List
-import requests
-from io import BytesIO
 import numpy as np
-import PIL
 from PIL import Image
-from numpy.random import default_rng
-from matplotlib import pyplot as plt
-import math
 import torch
 import torch.nn as nn
-from torchvision import transforms, datasets
+from torchvision import transforms
 from facenet_pytorch import InceptionResnetV1
 import torchattacks
-from facelibtest import getScores
 from torch.utils.data import Dataset
 
 # If running on system with GPU use that, otherwise use the CPU
@@ -34,7 +26,7 @@ class ImageDataset(Dataset):
     def __getitem__(self, idx):
         image = self.data[idx]
         if self.transform:
-            image = self.transform(image)#.to(device)
+            image = self.transform(image).to(device)
         return image, 0
 
 # PGD settings
@@ -42,15 +34,15 @@ epsilon = 4 / 255
 epsilon_iter = 1 / 225
 nb_iter = 12
 
-def torchattacks_facenet_pgd(x, pretrain_set):
+def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
     preprocess_ = transforms.Compose([
         transforms.Resize(160),
         transforms.ToTensor(),
     ])
 
-    x = preprocess_(x)
-    x = x.unsqueeze(0).to(device)
+    image = preprocess_(image)
+    image = image.unsqueeze(0).to(device)
 
     # For a facenet model pretrained on VGGFace2 or casia-webface
     model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
@@ -58,15 +50,15 @@ def torchattacks_facenet_pgd(x, pretrain_set):
     # Run through PGD
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
-    adv_images = atk(x, torch.tensor([0]))
+    adv_images = atk(image, torch.tensor([0]))
 
     # Reshape the tensor
-    x = adv_images[0].permute((1, 2, 0))
+    adv_image = adv_images[0].permute((1, 2, 0))
 
-    return x
+    return adv_image
 
 def torchattacks_facenet_pgd_batched(images, labels, pretrain_set):
-    # Here x is batched and pre-transformed.
+    # Here images is batched and pre-transformed.
 
     # For a facenet model pretrained on VGGFace2 or casia-webface
     model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
@@ -134,4 +126,4 @@ def evaluate(alg: str, images) -> int:
             display(adv_image, "%sframe%d.jpg" % (output_path, index))
             index += 1
 
-    return 0
+    return 0 # TODO: non-arbitrary return value
