@@ -51,6 +51,13 @@ def setup():
                     .reshape([-1, height, width, 3])
             )
         print(video.shape)
+        print(num_frames)
+        print(height)
+        print(width)
+        
+        #TODO: FIX THIS, TEMPORARY CALL
+        perturb.evaluate("torchattacks_facenet_vggface2", video)
+        
     elif mode == 'List Algo':
         print(perturb.methods())
     else:
