@@ -7,6 +7,17 @@ from PIL import Image
 import ffmpeg
 import numpy as np
 
+#TODO: 
+# Traceback (most recent call last):
+#   File "main.py", line 75, in <module>
+#     setup()
+#   File "main.py", line 36, in setup
+#     probe = ffmpeg.probe(file_name)
+#   File "/home/ugrads/majors/jamespur/securecomputing/CapstoneSecureComputing/.venv/lib64/python3.6/site-packages/ffmpeg/_probe.py", line 23, in probe
+#     raise Error('ffprobe', out, err)
+# ffmpeg._run.Error: ffprobe error (see stderr output for detail)
+#
+# When passing in filename that does not exist
 
 class algoThread(threading.Thread):
     def __init__(self, threadID, algo, files):
