@@ -9,6 +9,13 @@ from facenet_pytorch import InceptionResnetV1
 import torchattacks
 from torch.utils.data import Dataset
 
+# TODO:
+# /home/ugrads/majors/jamespur/securecomputing/CapstoneSecureComputing/.venv/lib64/python3.6/site-packages/torchvision/transforms/functional.py:126: 
+# UserWarning: The given NumPy array is not writeable, and PyTorch does not support non-writeable tensors. This means you can write to the underlying 
+# (supposedly non-writeable) NumPy array using the tensor. You may want to copy the array to protect its data or make it writeable before converting 
+# it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at  ../torch/csrc/utils/tensor_numpy.cpp:189.)
+#   img = torch.from_numpy(pic.transpose((2, 0, 1))).contiguous()
+
 # If running on system with GPU use that, otherwise use the CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -117,13 +124,21 @@ def evaluate(alg: str, images) -> int:
     dataset = ImageDataset(images, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False)
 
+    # a little sloppy - could probably be better
+    # This creates an empty tensor and appends each batch of adversarial images to it
+    (c, h, w) = dataset[0][0].shape
+    adv_images = torch.empty((0, h, w, c)).to(device)
     for images, labels in dataloader:
-        adv_images = attacks[alg](images, labels)
+        adv_images = torch.cat((adv_images, attacks[alg](images, labels)), dim=0)
+        
+    # save all to folder -- TEMPORARY THIS IS NOT WHAT WE WANT DONE
+    for adv_image in adv_images:
+        #x = adv_image.permute((1, 2, 0))
+        display(adv_image, "%sframe%d.jpg" % (output_path, index))
+        index += 1
 
-        # save all to folder
-        for adv_image in adv_images:
-            #x = adv_image.permute((1, 2, 0))
-            display(adv_image, "%sframe%d.jpg" % (output_path, index))
-            index += 1
-
+    # At this point -- adv_images is a (n,h,w,c) tensor with the adversarial images
+    # dataset is a ImageDataset with the original images post transformations contained
+    # From here evaluation and reassembly into a video needs to be done
+    
     return 0 # TODO: non-arbitrary return value
