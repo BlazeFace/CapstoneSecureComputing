@@ -25,7 +25,7 @@ def setup():
     print("Welcome to [bold green]Truth[/bold green]!")
     mode = Prompt.ask("Please select mode", choices=['Local Preturb', 'Remote Preturb', 'Evaluate', 'Break Video'])
     # Some amount of choices
-    if mode == 'Local Preturb':
+    if mode == 'Local Perturb':
         files_raw_names = Prompt.ask('Enter Filenames comma seperated')
         file_names = files_raw_names.split(",")
         files = [file_name.strip() for file_name in file_names]
