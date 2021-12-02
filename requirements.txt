@@ -1,4 +1,4 @@
-numpy
+numpy~=1.21.4
 Pillow==8.4.0
 matplotlib==3.3.4
 torch==1.10.0
@@ -30,6 +30,7 @@ certifi==2021.10.8
 charset-normalizer==2.0.7
 idna==3.3
 torchattacks==3.2.2
-rich
+rich~=10.15.1
 ffmpeg-python
-facelib
+facelib~=1.2.1
+opencv-python~=4.5.4.60
