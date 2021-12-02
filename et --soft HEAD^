@@ -1,0 +1,168 @@
+[33mcommit 71560266e295d9f9bb8a9a9c2cfe511244758e27[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: James Purcell <jamespur@kepler.rlogin>
+Date:   Thu Dec 2 15:25:59 2021 -0500
+
+    file organization
+
+[33mcommit bc89c9a2d122ce6245533ae5f4b18f48c4afd374[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: e289c14 aad804e
+Author: BlazeFace <nate.bensing@gmail.com>
+Date:   Thu Dec 2 06:56:44 2021 -0500
+
+    Merge remote-tracking branch 'origin/main'
+
+[33mcommit e289c14571bf16c321f7e6841e55062a0e0eb2d0[m
+Author: BlazeFace <nate.bensing@gmail.com>
+Date:   Thu Dec 2 06:56:36 2021 -0500
+
+    Small Fixes
+
+[33mcommit aad804e17c7933bb9c9683bf2eee05c2351c4510[m
+Author: James Purcell <jamespur@fermi.rlogin>
+Date:   Wed Dec 1 17:25:22 2021 -0500
+
+    adv_images contains all batches after permutations are done
+
+[33mcommit 8992a33ca956427ed232ed2a56d8faf78ff24bc9[m
+Author: James Purcell <jamespur@fermi.rlogin>
+Date:   Tue Nov 30 01:50:31 2021 -0500
+
+    more refactoring for more easily read code
+
+[33mcommit ab41fe5ccf0c8318fccc27e98e5f315e4b14dc96[m
+Author: James Purcell <jamespur@fermi.rlogin>
+Date:   Tue Nov 30 01:43:10 2021 -0500
+
+    MAJOR overhaul of perturbation code, lots of outdated code removed, now synced with the CLI, and works with videos only
+
+[33mcommit 8f032a17ed146579513949a828c6ccd92d3dd89c[m
+Author: nate <nateb@vt.edu>
+Date:   Mon Nov 29 15:36:11 2021 -0500
+
+    Added cli
+
+[33mcommit c5d3f167de8ed082c5f1deb0a79d1a1da7d35f69[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Mon Nov 29 14:59:25 2021 -0500
+
+    support for batches
+
+[33mcommit a16388b8a71ff40dc78d8e9789179d59b1cd6416[m
+Author: James Purcell <jamespur@kepler.rlogin>
+Date:   Wed Nov 17 15:36:34 2021 -0500
+
+    current changes
+
+[33mcommit e6d210c9eda5a3ba91452545ff83e9497588f0bb[m
+Author: James Purcell <jamespur@turing.rlogin>
+Date:   Mon Nov 15 15:38:07 2021 -0500
+
+    beginning of interface
+
+[33mcommit 9e64a12aa1d965250ad480a18335674caff6ad9e[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 16:34:00 2021 -0500
+
+    create bounding boxes + better organization of output
+
+[33mcommit 2e2323e05f8ca247d49e38a7ad229694835a5e18[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 13:34:39 2021 -0500
+
+    integrated the facelib detection into the permutation pipeline for realtime evaluation
+
+[33mcommit c4d050160e21299a32564db5957bb1cccbca0f3e[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 11:43:00 2021 -0500
+
+    updated imagecomp
+
+[33mcommit 3c0de2e9af99af3d87c466518055343eea890fab[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 11:41:56 2021 -0500
+
+    yashs additions
+
+[33mcommit 00d460b10ff941b0e2a064c29c08ff47dfe2c949[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 11:39:02 2021 -0500
+
+    changes
+
+[33mcommit 54003b52d4de4e98a0a9d6097aee83a0e98d3305[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Wed Nov 10 11:18:59 2021 -0500
+
+    added torchattacks implementation
+
+[33mcommit 0de77b7c4e2ed7eaf64f790eda2cb6c65a8f6292[m
+Author: James Purcell <jamespur@fermi.rlogin>
+Date:   Wed Nov 3 15:51:39 2021 -0400
+
+    added support for facenet models
+
+[33mcommit e29d1032bc23117f0aee54e42b75746544364f75[m
+Author: James Purcell <jamespur@kepler.rlogin>
+Date:   Wed Nov 3 10:45:33 2021 -0400
+
+    formatting
+
+[33mcommit 90195b6f2201c5e107db57d1f5d86df91f71b485[m
+Author: James Purcell <jamespur@pascal.rlogin>
+Date:   Mon Nov 1 18:27:48 2021 -0400
+
+    further refined PGD parameters
+
+[33mcommit aada59c2c5e8c88b994818a73c4ce8c65d6402fd[m
+Author: James Purcell <jamespur@turing.rlogin>
+Date:   Mon Nov 1 18:12:11 2021 -0400
+
+    fixed import and changed PGD settings to produce usable results
+
+[33mcommit 0a5b60c979c1683f202fc082c4c6aa410766364c[m
+Author: James Purcell <jamespur@turing.rlogin>
+Date:   Mon Nov 1 18:01:05 2021 -0400
+
+    added normalization wrapper to eliminate need for inverse normalization
+
+[33mcommit dcd1ae9ab63b35d7b5232ea82e6cb951065f44e6[m
+Author: James Purcell <jamespur@kepler.rlogin>
+Date:   Mon Nov 1 15:37:06 2021 -0400
+
+    erroneous file upload
+
+[33mcommit 7d97ab277248cd8ee2c29947143d6c6dcc2ef208[m
+Author: James Purcell <jamespur@kepler.rlogin>
+Date:   Mon Nov 1 15:36:42 2021 -0400
+
+    Added the cleverhans PGD attack
+
+[33mcommit 129c42d387a63d2c6db4700a0ea72d043e52b21b[m
+Author: Nate <nateb@vt.edu>
+Date:   Mon Oct 4 18:22:37 2021 -0400
+
+    Now creates a delta
+
+[33mcommit 56c75ebcf9e410d5d0934c67c6209eae3e519fbd[m
+Author: Nate <nateb@vt.edu>
+Date:   Mon Oct 4 17:02:09 2021 -0400
+
+    Now it looks right
+
+[33mcommit e41c421d62ee4628b1bd4e25b428df8328dc9db1[m
+Author: Nate <nateb@vt.edu>
+Date:   Mon Oct 4 16:44:43 2021 -0400
+
+    out2 is the right one
+
+[33mcommit 8fb2749357e4a7e59e1c0e8fa1375d4d2a0866d5[m
+Author: James Purcell <jamespur@turing.rlogin>
+Date:   Mon Oct 4 12:17:32 2021 -0400
+
+    refactored and image display is now working
+
+[33mcommit 205fdb564dd5f291d2808150a2661c3ec1cb0c10[m
+Author: NateOstus <gameboy134@gmail.com>
+Date:   Wed Sep 29 15:05:40 2021 -0400
+
+    Initial commit
