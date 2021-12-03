@@ -8,6 +8,7 @@ from facenet_pytorch import InceptionResnetV1
 import torchattacks
 from torch.utils.data import Dataset
 
+import fl
 from facelibtest import getScores
 
 # TODO:
@@ -115,9 +116,7 @@ def evaluate(alg: str, original_images) -> int:
         None
         # intentionally left blank
 
-    """FACELIB TEST CODE"""
-
-    import fl
+    #Crop out the faces for perturbations
     cropped_images, boxes = fl.crop_faces(original_images) 
     cropped_images = [np.array(img) for img in cropped_images]
     cropped_images = np.asarray(cropped_images)
