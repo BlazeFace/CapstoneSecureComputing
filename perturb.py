@@ -41,7 +41,7 @@ class ImageDataset(Dataset):
 epsilon = 32 / 255
 epsilon_iter = 16 / 225
 nb_iter = 40
-
+ 
 def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
     preprocess_ = transforms.Compose([
