@@ -3,7 +3,6 @@ from typing import List
 import numpy as np
 from PIL import Image
 import torch
-import torch.nn as nn
 from torchvision import transforms
 from facenet_pytorch import InceptionResnetV1
 import torchattacks
@@ -113,6 +112,12 @@ def evaluate(alg: str, images) -> int:
     except FileExistsError:
         None
         # intentionally left blank
+
+    """FACELIB TEST CODE"""
+
+    # import fl
+    # cropped_images = np.asarray(fl.crop_faces(images))
+    # print(cropped_images.shape)
 
     # Transform x to be usable by Facenet
     transform = transforms.Compose([
