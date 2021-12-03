@@ -8,6 +8,8 @@ from facenet_pytorch import InceptionResnetV1
 import torchattacks
 from torch.utils.data import Dataset
 
+from facelibtest import getScores
+
 # TODO:
 # /home/ugrads/majors/jamespur/securecomputing/CapstoneSecureComputing/.venv/lib64/python3.6/site-packages/torchvision/transforms/functional.py:126: 
 # UserWarning: The given NumPy array is not writeable, and PyTorch does not support non-writeable tensors. This means you can write to the underlying 
@@ -36,9 +38,9 @@ class ImageDataset(Dataset):
         return image, 0
 
 # PGD settings
-epsilon = 4 / 255
-epsilon_iter = 1 / 225
-nb_iter = 12
+epsilon = 32 / 255
+epsilon_iter = 16 / 225
+nb_iter = 40
 
 def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
@@ -98,10 +100,10 @@ def methods() -> List[str]:
 # w - width of images
 # c - channels (3)
 # return score of effectiveness TODO: maybe not
-def evaluate(alg: str, images) -> int:
+def evaluate(alg: str, original_images) -> int:
     attacks = {
         "torchattacks_facenet_vggface2": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "vggface2"),
-        "torchattacks_facenet_casiawebface": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "casiawebface")
+        "torchattacks_facenet_casiawebface": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "casia-webface")
     }
     index = 0
     output_path = "output/test/"
@@ -115,15 +117,17 @@ def evaluate(alg: str, images) -> int:
 
     """FACELIB TEST CODE"""
 
-    # import fl
-    # cropped_images = np.asarray(fl.crop_faces(images))
-    # print(cropped_images.shape)
+    import fl
+    cropped_images, boxes = fl.crop_faces(original_images) 
+    cropped_images = [np.array(img) for img in cropped_images]
+    cropped_images = np.asarray(cropped_images)
+    print(cropped_images.shape)
+
+    images = cropped_images
 
     # Transform x to be usable by Facenet
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize(size=160),
-        transforms.CenterCrop(size=160),  # TODO: crop to the face rather than arbitrarily in the middle
     ])
 
     dataset = ImageDataset(images, transform=transform)
@@ -135,15 +139,27 @@ def evaluate(alg: str, images) -> int:
     adv_images = torch.empty((0, h, w, c)).to(device)
     for images, labels in dataloader:
         adv_images = torch.cat((adv_images, attacks[alg](images, labels)), dim=0)
-        
+
+    #put adversarial cropped face back on original images
+    # returns a list of PIL images
+    adv_images = fl.restore_images(original_images, adv_images.cpu().numpy(), boxes)
+
+    filenames = []
     # save all to folder -- TEMPORARY THIS IS NOT WHAT WE WANT DONE
     for adv_image in adv_images:
         #x = adv_image.permute((1, 2, 0))
-        display(adv_image, "%sframe%d.jpg" % (output_path, index))
+        #display(adv_image, "%sframe%d.jpg" % (output_path, index))
+        adv_image.save("%sframe%d.jpg" % (output_path, index))
+        filenames.append("%sframe%d.jpg" % (output_path, index))
         index += 1
 
-    # At this point -- adv_images is a (n,h,w,c) tensor with the adversarial images
-    # dataset is a ImageDataset with the original images post transformations contained
+    # temporary method of evaluating the images
+    total_faces, total_scores, total_boxes, total_landmarks = getScores(filenames, True)
+    for score in total_scores:
+        print(score[0].item())
+
+    # At this point -- adv_images is a list of PIL images with the adversarial images
+    # original_images is a numpy array of size (n, h, w, c) of the original images
     # From here evaluation and reassembly into a video needs to be done
     
     return 0 # TODO: non-arbitrary return value

@@ -5,7 +5,7 @@ import PIL
 from PIL import Image
 
 
-def getScores(filenames):
+def getScores(filenames, saveBoundingBoxes=False):
     detector = FaceDetector()
     images = []
 
@@ -34,7 +34,7 @@ def getScores(filenames):
         total_boxes.append(boxes)
         total_landmarks.append(landmarks)
 
-        if len(faces) >= 1:
+        if saveBoundingBoxes and len(faces) >= 1:
             im2 = Image.fromarray(faces.detach().cpu().numpy()[0])
             im2.save(filename.split('.')[0] + "boundingbox.jpg")
     
