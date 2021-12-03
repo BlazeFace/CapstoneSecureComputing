@@ -100,12 +100,3 @@ def restore_images(images, cropped_images, boxes):
     restored_images[100].save("example_restored.jpg")
     
     return restored_images
-
-def main():
-    input_filename = "input/example.jpg"
-    #img = PIL.Image.open("input/example.jpg")
-    img = cv2.imread(input_filename)
-    crop_face(img)
-
-if __name__ == "__main__":
-    main()
