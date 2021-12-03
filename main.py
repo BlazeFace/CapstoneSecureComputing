@@ -34,15 +34,18 @@ class algoThread(threading.Thread):
 
 def setup():
     print("Welcome to [bold green]Truth[/bold green]!")
-    mode = Prompt.ask("Please select mode", choices=['Local Preturb', 'Remote Preturb', 'Evaluate', 'Break Video'])
+    mode = Prompt.ask("Please select mode", choices=['Local Preturb', 'Remote Preturb', 'Evaluate', 'Break Video', 't'])
     # Some amount of choices
     if mode == 'Local Perturb':
         files_raw_names = Prompt.ask('Enter Filenames comma seperated')
         file_names = files_raw_names.split(",")
         files = [file_name.strip() for file_name in file_names]
         local_evaluate(files)
-    elif mode == 'Break Video':
-        file_raw_name = Prompt.ask('Enter Filename')
+    elif mode == 'Break Video' or mode == "t": # temporary test mode
+        if mode == "t":
+            file_raw_name = "input/samplevid.mp4"
+        else:
+            file_raw_name = Prompt.ask('Enter Filename')
         file_name = file_raw_name.strip()
         probe = ffmpeg.probe(file_name)
         video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
