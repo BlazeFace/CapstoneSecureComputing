@@ -59,6 +59,7 @@ def torchattacks_facenet_pgd(image, pretrain_set):
     # Run through PGD
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
+    #atk.set_mode_targeted_least_likely(500)
     adv_images = atk(image, torch.tensor([0]))
 
     # Reshape the tensor
