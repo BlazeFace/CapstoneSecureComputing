@@ -34,7 +34,7 @@ class algoThread(threading.Thread):
 
 def setup():
     print("Welcome to [bold green]Truth[/bold green]!")
-    mode = Prompt.ask("Please select mode", choices=['Local Preturb', 'Remote Preturb', 'Evaluate', 'Break Video', 't'])
+    mode = Prompt.ask("Please select mode", choices=['Local Perturb', 'Remote Perturb', 'Evaluate', 'Break Video', 't'])
     # Some amount of choices
     if mode == 'Local Perturb':
         files_raw_names = Prompt.ask('Enter Filenames comma seperated')
