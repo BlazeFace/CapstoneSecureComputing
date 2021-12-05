@@ -46,8 +46,4 @@ def load(x1, x2):
         dif = sum(abs(c1-c2) for p1,p2 in pairs for c1,c2 in zip(p1,p2))
     
     ncomponents = i1.size[0] * i1.size[1] * 3
-<<<<<<< HEAD
-    print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)
-=======
     print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)'''
->>>>>>> e6176ce28d7d5749a6aee9e9954f2fd827110e5c
