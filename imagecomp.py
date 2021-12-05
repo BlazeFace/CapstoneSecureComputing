@@ -1,7 +1,38 @@
+import os
+from typing import List
+import numpy as np
 from PIL import Image
+import torch
+from torchvision import transforms
+from facenet_pytorch import InceptionResnetV1
+import torchattacks
+from torch.utils.data import Dataset
 
 
-def image_comp(filename1, filename2):
+def load(x1, x2):
+    arr1 = [0] * len(x1)
+    arr2 = [0] * len(x2)
+    count1 = 0
+    count2 = 0
+
+    for i in x1:
+        if (torch.is_tensor(i)):
+            i = i.detach().cpu().numpy()
+        arr1[count1] = Image.fromarray(i.astype(np.uint8)).convert('RGB')
+        count = count + 1
+    
+    for j in x2:
+        if (torch.is_tensor(j)):
+            j = j.detach().cpu().numpy()
+        arr2[count2] = Image.fromarray(j.astype(np.uint8)).convert('RGB')
+    
+
+
+
+
+
+
+'''def image_comp(filename1, filename2):
     i1 = Image.open("output.jpeg")
     i2 = Image.open("out2.jpg")
     assert i1.mode == i2.mode, "Different kinds of images."
@@ -15,4 +46,8 @@ def image_comp(filename1, filename2):
         dif = sum(abs(c1-c2) for p1,p2 in pairs for c1,c2 in zip(p1,p2))
     
     ncomponents = i1.size[0] * i1.size[1] * 3
+<<<<<<< HEAD
     print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)
+=======
+    print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)'''
+>>>>>>> e6176ce28d7d5749a6aee9e9954f2fd827110e5c
