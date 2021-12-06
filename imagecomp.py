@@ -7,8 +7,9 @@ from torchvision import transforms
 from facenet_pytorch import InceptionResnetV1
 import torchattacks
 from torch.utils.data import Dataset
+from ssim3 import *
 
-
+main("example_restored.jpg", "example_restored.jpg")
 
 
 '''def load(x1, x2):
