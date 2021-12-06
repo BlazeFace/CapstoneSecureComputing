@@ -9,7 +9,9 @@ import torchattacks
 from torch.utils.data import Dataset
 
 
-def load(x1, x2):
+
+
+'''def load(x1, x2):
     arr1 = [0] * len(x1)
     arr2 = [0] * len(x2)
     count1 = 0
@@ -19,12 +21,17 @@ def load(x1, x2):
         if (torch.is_tensor(i)):
             i = i.detach().cpu().numpy()
         arr1[count1] = Image.fromarray(i.astype(np.uint8)).convert('RGB')
-        count = count + 1
+        count1 = count1 + 1
     
     for j in x2:
         if (torch.is_tensor(j)):
             j = j.detach().cpu().numpy()
         arr2[count2] = Image.fromarray(j.astype(np.uint8)).convert('RGB')
+        count2 = count2 + 1
+
+def sorter(arr1, arr2):
+    print(5)'''
+
     
 
 
