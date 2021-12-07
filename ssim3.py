@@ -28,15 +28,15 @@ def compare(imageA, imageB):
  # Return the SSIM. The higher the value, the more "similar" the two images are.
  return s
 
-def main(): 
+def main(im1, im2): 
 
  # Get options
- args = options()
+ #args = options()
 
  # Import images
  # this could be changed to a hard code or a seperate parameter being passed in
- image1 = cv2.imread(args.first)
- image2 = cv2.imread(args.second, 1)
+ image1 = cv2.imread(im1)
+ image2 = cv2.imread(im2)
 
  # Convert the images to grayscale
  gray1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
@@ -69,4 +69,4 @@ def main():
   print("SSIM:", ssim_value)
 
 if __name__ == '__main__':
-	main()
+	main("/home/yakorde/capstone/CapstoneSecureComputing/example_restored.jpg", "/home/yakorde/capstone/CapstoneSecureComputing/example_restored.jpg")
