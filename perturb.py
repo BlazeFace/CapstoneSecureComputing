@@ -130,8 +130,8 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
     if faceOnly:
         #Crop out the faces for perturbations
         cropped_images, boxes = fl.crop_faces(original_images) 
-        cropped_images = [np.array(img) for img in cropped_images]
-        cropped_images = np.asarray(cropped_images)
+        # cropped_images = [np.array(img) for img in cropped_images]
+        # cropped_images = np.asarray(cropped_images)
 
         images = cropped_images
     else:
@@ -179,7 +179,10 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
         print("Detected: %d" % len(total_scores))
         if len(total_scores) > 0:
             for score in total_scores:
-                print(score[0].item())
+                if len(score) > 0:
+                    print(score[0].item())
+                else:
+                    print("no score")
 
     # At this point -- adv_images is a list of PIL images with the adversarial images
     # original_images is a numpy array of size (n, h, w, c) of the original images

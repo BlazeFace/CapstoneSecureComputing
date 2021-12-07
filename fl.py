@@ -7,14 +7,20 @@ from PIL import Image
 import numpy as np
 
 #TODO: document
-def crop_faces(images):
-    print("=== Cropping faces out of input images for perturbing ===")
+def crop_faces(images, debug = True):
+    if debug:
+        print("=== Cropping faces out of input images for perturbing ===")
 
+    print(images[0].shape)
     # Facelib to detect faces TODO: we can consider using MTCNN instead which is what facenet recommends using
+    if debug:
+        print("Detecting faces...")
     detector = FaceDetector()
     boxes = [detector.detect_faces(img)[0] for img in images]
 
     # Crop each image to its bounding box and round the bounding boxes to an int
+    if debug:
+        print("Cropping images...")
     cropped_images = []
     new_boxes = []
     for img, box in zip(images, boxes):
@@ -23,8 +29,12 @@ def crop_faces(images):
         new_boxes.append(new_box)
     
     # apply a resize to each image to ensure they are all the same size
+    if debug:
+        print("resizing faces...")
     cropped_resized_images = [resize(img) for img in cropped_images]
 
+    if debug:
+        print("done")
     return cropped_resized_images, new_boxes
 
 #TODO: document
@@ -47,7 +57,11 @@ def resize(img, final_size=160): #TODO: We know it's 160 because the networks, w
 
 #TODO: document
 def crop_image(img, box): # TODO: What if face isnt detected?
-    x,y,w,h = box[0].int().tolist()
+    if len(box > 0):
+        x,y,w,h = box[0].int().tolist()
+    else:
+        x,y = 0, 0
+        w,h,_ = img.shape
     return img[y:h, x:w], [x,y,w,h]
 
 #TODO: document
