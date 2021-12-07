@@ -68,3 +68,4 @@ ax[2].set_title('Image plus constant')
 
 plt.tight_layout()
 plt.show()
+plt.savefig('test.jpg')

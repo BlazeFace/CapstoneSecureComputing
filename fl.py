@@ -1,3 +1,6 @@
+# This file is responsible for cropping images to just the face before perturbations
+# and putting the face back on the original image after perturbations
+
 from facelib import FaceDetector
 import PIL
 from PIL import Image
