@@ -1,27 +1,17 @@
-import os
-from typing import List
-import numpy as np
-from PIL import Image
-import torch
-from torchvision import transforms
-from facenet_pytorch import InceptionResnetV1
-import torchattacks
-from torch.utils.data import Dataset
 from ssim3 import *
 
+values = 0
+for i in range(655):
+    values += main("output/test/frame%d.jpg" % i, "output/test_scaled/frame%d.jpg" % i)
 
-for filename in os.listdir(directory):
-    f = os.path.join(directory, filename)
-    if os.path.isfile(f):
-        main(f, )
-        
-
-main("example_restored.jpg", "example_restored.jpg")
+print(values / 655)
 
 
+#main("example_restored.jpg", "example_restored.jpg")
 
 
-'''def load(x1, x2):
+'''
+def load(x1, x2):
     arr1 = [0] * len(x1)
     arr2 = [0] * len(x2)
     count1 = 0
@@ -40,16 +30,11 @@ main("example_restored.jpg", "example_restored.jpg")
         count2 = count2 + 1
 
 def sorter(arr1, arr2):
-    print(5)'''
+    print(5)
+'''
 
-    
-
-
-
-
-
-
-'''def image_comp(filename1, filename2):
+'''
+def image_comp(filename1, filename2):
     i1 = Image.open("output.jpeg")
     i2 = Image.open("out2.jpg")
     assert i1.mode == i2.mode, "Different kinds of images."
@@ -63,4 +48,5 @@ def sorter(arr1, arr2):
         dif = sum(abs(c1-c2) for p1,p2 in pairs for c1,c2 in zip(p1,p2))
     
     ncomponents = i1.size[0] * i1.size[1] * 3
-    print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)'''
+    print ("Difference (percentage):", (dif / 255.0 * 100) / ncomponents)
+'''

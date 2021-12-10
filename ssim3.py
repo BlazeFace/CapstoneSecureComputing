@@ -65,8 +65,9 @@ def main(im1, im2):
  if round(ratio_orig, 2) == round(ratio_comp, 2):
   mse_value = mse(gray1, gray2)
   ssim_value = compare(gray1, gray2)
-  print("MSE:", mse_value)
-  print("SSIM:", ssim_value)
+  #print("MSE:", mse_value)
+  #print("SSIM:", ssim_value)
+  return ssim_value
 
 if __name__ == '__main__':
 	main("/home/yakorde/capstone/CapstoneSecureComputing/example_restored.jpg", "/home/yakorde/capstone/CapstoneSecureComputing/example_restored.jpg")
