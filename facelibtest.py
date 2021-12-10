@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import PIL
 from PIL import Image
 
-
+# This method gets the scores from the facelib algorithm which tells us
+# whether or not the face is being detected or not
 def getScores(filenames, saveBoundingBoxes=False):
     detector = FaceDetector()
     images = []
