@@ -9,7 +9,16 @@ import torchattacks
 from torch.utils.data import Dataset
 from ssim3 import *
 
+
+for filename in os.listdir(directory):
+    f = os.path.join(directory, filename)
+    if os.path.isfile(f):
+        main(f, )
+        
+
 main("example_restored.jpg", "example_restored.jpg")
+
+
 
 
 '''def load(x1, x2):
