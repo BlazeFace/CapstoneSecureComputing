@@ -9,7 +9,14 @@ import torchattacks
 from torch.utils.data import Dataset
 from ssim3 import *
 
-main("example_restored.jpg", "example_restored.jpg")
+values = 0
+for i in range(655):
+    values += main("output/test/frame%d.jpg" % i, "output/test_scaled/frame%d.jpg" % i)
+
+print(values / 655)
+
+
+#main("example_restored.jpg", "example_restored.jpg")
 
 
 '''def load(x1, x2):

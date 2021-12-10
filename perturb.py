@@ -7,6 +7,8 @@ from torchvision import transforms
 from facenet_pytorch import InceptionResnetV1
 import torchattacks
 from torch.utils.data import Dataset
+import time
+from datetime import timedelta
 
 import fl
 from facelibtest import getScores
@@ -41,7 +43,7 @@ class ImageDataset(Dataset):
 # PGD settings
 epsilon = 4 / 255
 epsilon_iter = 1 / 225
-nb_iter = 12
+nb_iter = 40
  
 def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
@@ -102,15 +104,17 @@ def methods() -> List[str]:
 # w - width of images
 # c - channels (3)
 # return score of effectiveness TODO: maybe not
-def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
+def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
+    start_time = time.time()
     attacks = {
         "torchattacks_facenet_vggface2": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "vggface2"),
         "torchattacks_facenet_casiawebface": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "casia-webface")
     }
     index = 0
     output_path = "output/test/"
+    scaled_path = "output/test_scaled/"
 
-    if debug >= 2:
+    if debug >= 3:
         for original_image in original_images:
             original_image = Image.fromarray(original_image.astype(np.uint8))
             #x = adv_image.permute((1, 2, 0))
@@ -127,6 +131,24 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
         None
         # intentionally left blank
 
+    if debug >= 2:
+        try:
+            os.mkdir(scaled_path)
+        except FileExistsError:
+            None
+            # intentionally left blank
+        transform = transforms.Compose([
+            transforms.Resize(160),
+            transforms.CenterCrop(160),
+                ])
+        scaled_images = [transform(Image.fromarray(img)) for img in original_images]
+
+        for image in scaled_images:
+            image.save("%sframe%d.jpg" % (scaled_path, index))
+            index += 1
+
+        index = 0
+    
     if faceOnly:
         #Crop out the faces for perturbations
         cropped_images, boxes = fl.crop_faces(original_images) 
@@ -148,6 +170,7 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
     dataset = ImageDataset(images, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False)
 
+
     # a little sloppy - could probably be better
     # This creates an empty tensor and appends each batch of adversarial images to it
     (c, h, w) = dataset[0][0].shape
@@ -167,6 +190,7 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
         filenames = []
 
         # save all to folder -- TEMPORARY THIS IS NOT WHAT WE WANT DONE
+
         for adv_image in adv_images:
             #x = adv_image.permute((1, 2, 0))
             #display(adv_image, "%sframe%d.jpg" % (output_path, index))
@@ -188,4 +212,7 @@ def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
     # original_images is a numpy array of size (n, h, w, c) of the original images
     # From here evaluation and reassembly into a video needs to be done
     
+    end_time = time.time()
+    print("Time Elapsed in permutations:")
+    print(timedelta(seconds=end_time-start_time))
     return 0 # TODO: non-arbitrary return value
