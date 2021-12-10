@@ -23,6 +23,7 @@ from facelibtest import getScores
 # If running on system with GPU use that, otherwise use the CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 # This custom dataset is necessary to use torch's built in multithreading
 # on our dataset of a list of frames
 # we are ignoring the labels for now TODO: maybe there's a better way to handle that
@@ -40,11 +41,13 @@ class ImageDataset(Dataset):
             image = self.transform(image).to(device)
         return image, 0
 
+
 # PGD settings
 epsilon = 4 / 255
 epsilon_iter = 1 / 225
-nb_iter = 40
- 
+nb_iter = 12
+
+
 def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
     preprocess_ = transforms.Compose([
@@ -61,13 +64,14 @@ def torchattacks_facenet_pgd(image, pretrain_set):
     # Run through PGD
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
-    #atk.set_mode_targeted_least_likely(500)
+    # atk.set_mode_targeted_least_likely(500)
     adv_images = atk(image, torch.tensor([0]))
 
     # Reshape the tensor
     adv_image = adv_images[0].permute((1, 2, 0))
 
     return adv_image
+
 
 def torchattacks_facenet_pgd_batched(images, labels, pretrain_set):
     # Here images is batched and pre-transformed.
@@ -86,6 +90,7 @@ def torchattacks_facenet_pgd_batched(images, labels, pretrain_set):
 
     return adv_images
 
+
 # Helper function to display an image (TEMPORARY -- THIS SHOULD NOT BE A PART OF THE PIPELINE)
 def display(x, filename):
     if torch.is_tensor(x):
@@ -93,9 +98,11 @@ def display(x, filename):
     img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
     img.save(filename)
 
+
 # Return list of strings of all algorithms
 def methods() -> List[str]:
     return ["torchattacks_facenet_vggface2", "torchattacks_facenet_casiawebface"]
+
 
 # alg -- string
 # images -- Numpy 4D array in format (n, h, w, c)
@@ -117,8 +124,8 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
     if debug >= 3:
         for original_image in original_images:
             original_image = Image.fromarray(original_image.astype(np.uint8))
-            #x = adv_image.permute((1, 2, 0))
-            #display(adv_image, "%sframe%d.jpg" % (output_path, index))
+            # x = adv_image.permute((1, 2, 0))
+            # display(adv_image, "%sframe%d.jpg" % (output_path, index))
             original_image.save("%sframe%d_original.jpg" % (output_path, index))
             index += 1
             quit()
@@ -128,7 +135,7 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
     try:
         os.mkdir(output_path)
     except FileExistsError:
-        None
+        var = None
         # intentionally left blank
 
     if debug >= 2:
@@ -150,14 +157,14 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
         index = 0
     
     if faceOnly:
-        #Crop out the faces for perturbations
-        cropped_images, boxes = fl.crop_faces(original_images) 
+        # Crop out the faces for perturbations
+        cropped_images, boxes = fl.crop_faces(original_images)
         # cropped_images = [np.array(img) for img in cropped_images]
         # cropped_images = np.asarray(cropped_images)
 
         images = cropped_images
     else:
-        # Uses the entire image for pertburbations
+        # Uses the entire image for perturb
         images = [Image.fromarray(x.astype(np.uint8)) for x in original_images]
 
     # Transform x to be usable by Facenet
@@ -179,11 +186,11 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
         adv_images = torch.cat((adv_images, attacks[alg](images, labels)), dim=0)
 
     if faceOnly:
-        #put adversarial cropped face back on original images
+        # put adversarial cropped face back on original images
         # returns a list of PIL images
         adv_images = fl.restore_images(original_images, adv_images.cpu().numpy(), boxes)
     else:
-        #Change all the tensors in adv_images to PIL images for saving / evaluating
+        # Change all the tensors in adv_images to PIL images for saving / evaluating
         adv_images = [Image.fromarray(x.detach().cpu().numpy().astype(np.uint8)) for x in adv_images]
 
     if debug:
@@ -192,8 +199,8 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
         # save all to folder -- TEMPORARY THIS IS NOT WHAT WE WANT DONE
 
         for adv_image in adv_images:
-            #x = adv_image.permute((1, 2, 0))
-            #display(adv_image, "%sframe%d.jpg" % (output_path, index))
+            # x = adv_image.permute((1, 2, 0))
+            # display(adv_image, "%sframe%d.jpg" % (output_path, index))
             adv_image.save("%sframe%d.jpg" % (output_path, index))
             filenames.append("%sframe%d.jpg" % (output_path, index))
             index += 1
