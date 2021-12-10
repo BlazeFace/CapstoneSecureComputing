@@ -2,16 +2,17 @@
 # and putting the face back on the original image after perturbations
 
 from facelib import FaceDetector
-import PIL
 from PIL import Image
 import numpy as np
 
-#TODO: document
+#TODO: Be seriously diligent about the rounding and math to ensure no off-by-one errors
+
+# Crops a series of images to a face using Facelib and scales them to 160x160
+# images -- Numpy 4D array in format (n, h, w, c)
 def crop_faces(images, debug = True):
     if debug:
         print("=== Cropping faces out of input images for perturbing ===")
 
-    print(images[0].shape)
     # Facelib to detect faces TODO: we can consider using MTCNN instead which is what facenet recommends using
     if debug:
         print("Detecting faces...")
@@ -37,7 +38,23 @@ def crop_faces(images, debug = True):
         print("done")
     return cropped_resized_images, new_boxes
 
-#TODO: document
+# Crop an image to the given bouding box and return the rounded bounding box for use later
+# img - Numpy 3D array in format (h, w, c)
+# box - list of bounding boxes from facelib (x,y,w,h)
+# if no boxes are found, use the dimensions of the image
+# otherwise, use the first bouding box in the list # TODO: what if multiple faces (Out of scope)
+# Return the cropped image (h,w,c) and the bounding box [x,y,w,h]
+def crop_image(img, box): # TODO: What if face isnt detected?
+    if len(box > 0):
+        x,y,w,h = box[0].int().tolist()
+    else:
+        x,y = 0, 0
+        w,h,_ = img.shape
+    return img[y:h, x:w], [x,y,w,h]
+
+# Resize the cropped image to be the size needed by the Network
+# img - Numpy 3D array in format (h, w, c)
+# Return the image as a PIL Image (we need it to be PIL to do the image resizing and pasting)
 def resize(img, final_size=160): #TODO: We know it's 160 because the networks, we should have a way to change this in case we used another network
     img = Image.fromarray(img)
 
@@ -55,16 +72,11 @@ def resize(img, final_size=160): #TODO: We know it's 160 because the networks, w
     
     return new_im
 
-#TODO: document
-def crop_image(img, box): # TODO: What if face isnt detected?
-    if len(box > 0):
-        x,y,w,h = box[0].int().tolist()
-    else:
-        x,y = 0, 0
-        w,h,_ = img.shape
-    return img[y:h, x:w], [x,y,w,h]
-
-#TODO: document
+#Restores an image to its original size
+# image - original frame - Numpy 3D array in format (h, w, c)
+# cropped_image - cropped frame - Numpy 3D array in format (h, w, c)
+# box - the box the cropped image was pulled from [x,y,w,h]
+# Return the original image with the restored face pasted back on the image as a PIL Image
 def restore_image(image, cropped_image, box):
     size = 160 # temp
     x,y,x2,y2 = box
@@ -87,7 +99,11 @@ def restore_image(image, cropped_image, box):
     image.paste(img, (x, y))
     return image
 
-# TODO: document
+# Applys restore_image to a list of images, cropped images, and boxes
+# images - list of orginal frames - Numpy 3D array in format (h, w, c)
+# cropped_images - list of cropped frames - Numpy 3D array in format (h, w, c)
+# boxes - list of the boxes the cropped image was pulled from [x,y,w,h]
+# Return the original images with the restored face pasted back on the image as a PIL Image
 def restore_images(images, cropped_images, boxes):
     print("=== Image Restoration ===")
     print("%d images to restore" % len(boxes))

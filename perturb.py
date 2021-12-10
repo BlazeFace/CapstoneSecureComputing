@@ -13,19 +13,16 @@ from datetime import timedelta
 import fl
 from facelibtest import getScores
 
-# TODO:
-# /home/ugrads/majors/jamespur/securecomputing/CapstoneSecureComputing/.venv/lib64/python3.6/site-packages/torchvision/transforms/functional.py:126: 
-# UserWarning: The given NumPy array is not writeable, and PyTorch does not support non-writeable tensors. This means you can write to the underlying 
-# (supposedly non-writeable) NumPy array using the tensor. You may want to copy the array to protect its data or make it writeable before converting 
-# it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at  ../torch/csrc/utils/tensor_numpy.cpp:189.)
-#   img = torch.from_numpy(pic.transpose((2, 0, 1))).contiguous()
+# PGD settings
+epsilon = 4 / 255
+epsilon_iter = 1 / 225
+nb_iter = 12
 
 # If running on system with GPU use that, otherwise use the CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-# This custom dataset is necessary to use torch's built in multithreading
-# on our dataset of a list of frames
+# This custom dataset is necessary to use torch's built in batch processing
+# All it does is apply a given transform composition to each element in data when batches are being created
 # we are ignoring the labels for now TODO: maybe there's a better way to handle that
 class ImageDataset(Dataset):
     def __init__(self, data, transform=None):
@@ -39,22 +36,19 @@ class ImageDataset(Dataset):
         image = self.data[idx]
         if self.transform:
             image = self.transform(image).to(device)
-        return image, 0
+        return image, 0 # 0 = label
 
-
-# PGD settings
-epsilon = 4 / 255
-epsilon_iter = 1 / 225
-nb_iter = 12
-
-
+"""Not being used in current pipeline"""
+# Generates adversarial image using PGD for a single image
+#Takes a PIL image and a string for the set FaceNet should be trained on
+#Returns a numpy array (h,w,c) representing an adversarial image
 def torchattacks_facenet_pgd(image, pretrain_set):
     # Transform x to be usable by Facenet
     preprocess_ = transforms.Compose([
         transforms.Resize(160),
+        transforms.CenterCrop(),
         transforms.ToTensor(),
     ])
-
     image = preprocess_(image)
     image = image.unsqueeze(0).to(device)
 
@@ -64,17 +58,19 @@ def torchattacks_facenet_pgd(image, pretrain_set):
     # Run through PGD
     atk = torchattacks.PGD(model, eps=epsilon, alpha=epsilon_iter, steps=nb_iter)
     atk.set_return_type(type='int')
-    # atk.set_mode_targeted_least_likely(500)
-    adv_images = atk(image, torch.tensor([0]))
+    adv_image = atk(image, torch.tensor([0]))[0]
 
     # Reshape the tensor
-    adv_image = adv_images[0].permute((1, 2, 0))
+    # (c, h, w) --> (h, w, c)
+    adv_image = adv_image.permute((1, 2, 0))
 
     return adv_image
 
-
+# Generates adversarial images using PGD for a batch
+#Takes a batch of images and labels and a string for the set FaceNet should be trained on
+#Returns a numpy array (n,h,w,c) of adversarial images
 def torchattacks_facenet_pgd_batched(images, labels, pretrain_set):
-    # Here images is batched and pre-transformed.
+    #The batched version assumes the batches have been preprocessed
 
     # For a facenet model pretrained on VGGFace2 or casia-webface
     model = InceptionResnetV1(pretrained=pretrain_set).eval().to(device)
@@ -90,38 +86,36 @@ def torchattacks_facenet_pgd_batched(images, labels, pretrain_set):
 
     return adv_images
 
-
-# Helper function to display an image (TEMPORARY -- THIS SHOULD NOT BE A PART OF THE PIPELINE)
-def display(x, filename):
-    if torch.is_tensor(x):
-        x = x.detach().cpu().numpy()  # put tensor on CPU
-    img = Image.fromarray(x.astype(np.uint8)).convert('RGB')
-    img.save(filename)
-
-
 # Return list of strings of all algorithms
+# The plan was to make the CLI and possibly the cloud integration modular
+# If multiple perturbation methods were added, this was how the CLI or cloud would know
+# what perturbation methods were available
 def methods() -> List[str]:
     return ["torchattacks_facenet_vggface2", "torchattacks_facenet_casiawebface"]
 
-
-# alg -- string
+# The 'api' call to perturb a video
+# alg -- string representing which algorithhm to use
 # images -- Numpy 4D array in format (n, h, w, c)
 # n - number of images
 # h - height of images
 # w - width of images
 # c - channels (3)
-# return score of effectiveness TODO: maybe not
-def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
-    start_time = time.time()
+# faceOnly -- if True, crop to the face, perturb that, and paste back onto video. Else, perturb whole video
+# The end state of this function is still undetermined TODO: save a video, return the images, etc
+def evaluate(alg: str, original_images, debug=1, faceOnly = False) -> int:
+    start_time = time.time() # record time to know how long perturbation pipeline took
+
+    #The only thing that will change based on the alg string is which attack to run
     attacks = {
         "torchattacks_facenet_vggface2": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "vggface2"),
         "torchattacks_facenet_casiawebface": lambda x, y: torchattacks_facenet_pgd_batched(x, y, "casia-webface")
     }
-    index = 0
+
     output_path = "output/test/"
     scaled_path = "output/test_scaled/"
 
     if debug >= 3:
+        index = 0
         for original_image in original_images:
             original_image = Image.fromarray(original_image.astype(np.uint8))
             # x = adv_image.permute((1, 2, 0))
@@ -129,54 +123,52 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
             original_image.save("%sframe%d_original.jpg" % (output_path, index))
             index += 1
             quit()
-        index = 0
 
     # Create the output directory if it does not already exist TODO: we dont want this long term
     try:
         os.mkdir(output_path)
     except FileExistsError:
-        var = None
-        # intentionally left blank
-
+        pass
+    
+    #If debug level is >= 2, create scaled to 160x160 versions of every frame and save in scaled_path
+    #Used for manual SSIM eval
     if debug >= 2:
         try:
             os.mkdir(scaled_path)
         except FileExistsError:
-            None
-            # intentionally left blank
+            pass
+
         transform = transforms.Compose([
             transforms.Resize(160),
             transforms.CenterCrop(160),
                 ])
         scaled_images = [transform(Image.fromarray(img)) for img in original_images]
 
+        index = 0
         for image in scaled_images:
             image.save("%sframe%d.jpg" % (scaled_path, index))
             index += 1
-
-        index = 0
     
     if faceOnly:
         # Crop out the faces for perturbations
         cropped_images, boxes = fl.crop_faces(original_images)
-        # cropped_images = [np.array(img) for img in cropped_images]
-        # cropped_images = np.asarray(cropped_images)
 
         images = cropped_images
     else:
         # Uses the entire image for perturb
         images = [Image.fromarray(x.astype(np.uint8)) for x in original_images]
 
-    # Transform x to be usable by Facenet
+    # Transform x to be usable by FaceNet
     transform = transforms.Compose([
         transforms.Resize(160),
         transforms.CenterCrop(160),
         transforms.ToTensor(),
     ])
 
+    # Torch's batch handling
+    # ImageDataset is our custom dataset defined at the top of the file
     dataset = ImageDataset(images, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False)
-
 
     # a little sloppy - could probably be better
     # This creates an empty tensor and appends each batch of adversarial images to it
@@ -194,10 +186,9 @@ def evaluate(alg: str, original_images, debug=2, faceOnly = False) -> int:
         adv_images = [Image.fromarray(x.detach().cpu().numpy().astype(np.uint8)) for x in adv_images]
 
     if debug:
-        filenames = []
-
         # save all to folder -- TEMPORARY THIS IS NOT WHAT WE WANT DONE
-
+        index = 0
+        filenames = []
         for adv_image in adv_images:
             # x = adv_image.permute((1, 2, 0))
             # display(adv_image, "%sframe%d.jpg" % (output_path, index))
