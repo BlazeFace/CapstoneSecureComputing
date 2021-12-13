@@ -10,5 +10,7 @@ Python 3.6 or 3.7 must be used.
 How permutations work
 
 How to generate eval
-
+1. Once you have all the images you from the video being processed you can call the imagecomp.py
+class, which will result in the average SSIM value being returned allowing you to tell how similar
+the perturbed and unperturbed images look.
 etc
