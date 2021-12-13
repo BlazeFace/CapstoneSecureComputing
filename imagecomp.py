@@ -1,15 +1,17 @@
 from ssim3 import *
 
 values = 0
+# generates the values for each jpg images after video processing is complete
 for i in range(655):
     values += main("output/test/frame%d.jpg" % i, "output/test_scaled/frame%d.jpg" % i)
 
+#returns average SSIM value of all images
 print(values / 655)
 
 
 #main("example_restored.jpg", "example_restored.jpg")
 
-
+#old code not neccessary to read
 '''
 def load(x1, x2):
     arr1 = [0] * len(x1)
